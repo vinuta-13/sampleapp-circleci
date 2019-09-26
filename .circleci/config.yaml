@@ -1,0 +1,49 @@
+version: 2.1
+executors:
+    my-executor:
+      docker:
+        - image: circleci/node:8.9.4 # the primary container, where your job's commands are run
+jobs:
+  job1:
+    executor: my-executor
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm test
+  job2:
+    executor: my-executor
+    steps:
+      - run: echo "Executed once sample app is built and tested" # run the `echo` command  
+  job3: # runs not using Workflows must have a `build` job as entry point
+    executor: my-executor
+    steps: # steps that comprise the `build` job
+      - checkout # check out source code to working directory
+      # Run a step to setup an environment variable.
+      - run:
+          name: "Setup custom environment variables"
+          command: |
+            echo 'export MY_ENV_VAR="FOO"' >> $BASH_ENV # Redirect MY_ENV_VAR into $BASH_ENV
+      # Run a step to print what branch our code base is on.
+      - run: # test what branch we're on.
+          name: "What branch am I on?"
+          command: echo ${CIRCLE_BRANCH}
+      # Run another step, the same as above; note that you can
+      # invoke environment variable without curly braces.
+      - run:
+          name: "What branch am I on now?"
+          command: echo $CIRCLE_BRANCH
+      - run:
+          name: "What was my custom environment variable?"
+          command: echo ${MY_ENV_VAR}
+
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - job1
+      - job2:
+          requires:
+            - job1
+      - job3
+
+
